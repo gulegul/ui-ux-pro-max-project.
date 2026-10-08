@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Outdoors Chairs — Furniture for slow days outside</title>
+  <meta name="description" content="Minimal, weather-ready outdoor chairs for patios, gardens and balconies.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container bar">
+      <a class="logo" href="#top" aria-label="Outdoors Chairs home">Outdoors<span>Chairs</span></a>
+      <nav id="nav" class="nav" aria-label="Main">
+        <a href="#shop">Shop</a>
+        <a href="#collections">Collections</a>
+        <a href="#materials">Materials</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div class="actions">
+        <button class="cart" type="button" aria-label="Cart, 0 items">Cart <span id="cartCount">0</span></button>
+        <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav" aria-label="Open menu">
+          <span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero container" id="top">
+      <div class="hero-text">
+        <p class="eyebrow">New season · Spring collection</p>
+        <h1>Chairs made for slow days outside.</h1>
+        <p class="lead">Simple, durable seating for patios, gardens and balconies. Built to stay out in the weather and look better with time.</p>
+        <div class="cta">
+          <a class="btn" href="#shop">Shop chairs</a>
+          <a class="btn ghost" href="#materials">See materials</a>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 400 420" role="img">
+          <rect width="400" height="420" fill="#e8e1d6"/>
+          <circle cx="300" cy="110" r="52" fill="#d7c9b2"/>
+          <g fill="none" stroke="#2b2a27" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M140 90 L160 250"/>
+            <path d="M260 90 L240 250"/>
+            <path d="M135 150 H265"/>
+            <path d="M130 250 H270"/>
+            <path d="M140 250 L120 370"/>
+            <path d="M260 250 L280 370"/>
+            <path d="M160 250 L150 370"/>
+            <path d="M240 250 L250 370"/>
+          </g>
+          <rect x="60" y="376" width="280" height="8" rx="4" fill="#bfb39d"/>
+        </svg>
+      </div>
+    </section>
+
+    <section class="strip">
+      <div class="container strip-grid">
+        <p>Free delivery over $150</p>
+        <p>5-year frame warranty</p>
+        <p>30-day easy returns</p>
+        <p>Weatherproof finish</p>
+      </div>
+    </section>
+
+    <section class="section container" id="collections">
+      <div class="head">
+        <h2>Shop by collection</h2>
+        <a class="link" href="#shop">View all</a>
+      </div>
+      <div class="cards">
+        <a class="card" href="#shop"><div class="thumb t1"></div><h3>Lounge</h3><p>Deep seats for long afternoons.</p></a>
+        <a class="card" href="#shop"><div class="thumb t2"></div><h3>Dining</h3><p>Upright, stackable, easy to clean.</p></a>
+        <a class="card" href="#shop"><div class="thumb t3"></div><h3>Folding</h3><p>Light chairs that pack away flat.</p></a>
+        <a class="card" href="#shop"><div class="thumb t4"></div><h3>Rocking</h3><p>Gentle motion for the porch.</p></a>
+      </div>
+    </section>
+
+    <section class="section container" id="shop">
+      <div class="head">
+        <h2>Featured chairs</h2>
+        <div class="filters" role="group" aria-label="Filter products">
+          <button class="chip active" data-filter="all" type="button">All</button>
+          <button class="chip" data-filter="lounge" type="button">Lounge</button>
+          <button class="chip" data-filter="dining" type="button">Dining</button>
+          <button class="chip" data-filter="folding" type="button">Folding</button>
+        </div>
+      </div>
+      <div class="products" id="products">
+        <article class="product" data-cat="lounge">
+          <div class="pimg c1"></div>
+          <h3>Dune Lounge Chair</h3><p class="meta">Teak · Sand cushion</p>
+          <div class="row"><span class="price">$289</span><button class="add" type="button">Add</button></div>
+        </article>
+        <article class="product" data-cat="dining">
+          <div class="pimg c2"></div>
+          <h3>Fjord Dining Chair</h3><p class="meta">Aluminium · Charcoal</p>
+          <div class="row"><span class="price">$129</span><button class="add" type="button">Add</button></div>
+        </article>
+        <article class="product" data-cat="folding">
+          <div class="pimg c3"></div>
+          <h3>Pocket Folding Chair</h3><p class="meta">Steel · Olive canvas</p>
+          <div class="row"><span class="price">$79</span><button class="add" type="button">Add</button></div>
+        </article>
+        <article class="product" data-cat="lounge">
+          <div class="pimg c4"></div>
+          <h3>Terra Wicker Armchair</h3><p class="meta">All-weather wicker</p>
+          <div class="row"><span class="price">$219</span><button class="add" type="button">Add</button></div>
+        </article>
+        <article class="product" data-cat="dining">
+          <div class="pimg c5"></div>
+          <h3>Slat Stacking Chair</h3><p class="meta">Powder-coated · White</p>
+          <div class="row"><span class="price">$99</span><button class="add" type="button">Add</button></div>
+        </article>
+        <article class="product" data-cat="folding">
+          <div class="pimg c6"></div>
+          <h3>Trail Camp Chair</h3><p class="meta">Lightweight · Carry bag</p>
+          <div class="row"><span class="price">$59</span><button class="add" type="button">Add</button></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section split container" id="materials">
+      <div class="swatch" aria-hidden="true"></div>
+      <div>
+        <p class="eyebrow">Materials</p>
+        <h2>Built to live outdoors.</h2>
+        <p class="lead">Every frame is treated against rain, sun and salt air. We use only a few materials and do each one well.</p>
+        <ul class="list">
+          <li><strong>Teak</strong> — naturally oily, ages to a soft silver.</li>
+          <li><strong>Powder-coated aluminium</strong> — light and rust-free.</li>
+          <li><strong>Solution-dyed fabric</strong> — resists fading and mildew.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section container" id="about">
+      <div class="about">
+        <h2>Simple furniture, honestly made.</h2>
+        <p>Outdoors Chairs started with one idea: a good outdoor chair shouldn't be complicated or disposable. We design a small range, test it through real seasons, and sell it directly at fair prices.</p>
+      </div>
+    </section>
+
+    <section class="newsletter">
+      <div class="container nl">
+        <div>
+          <h2>Get first look at new chairs</h2>
+          <p>One short email a month. No spam.</p>
+        </div>
+        <form id="nlForm" novalidate>
+          <label class="sr" for="email">Email address</label>
+          <input id="email" type="email" placeholder="you@example.com" required>
+          <button class="btn" type="submit">Subscribe</button>
+          <p id="nlMsg" class="msg" role="status"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="contact">
+    <div class="container foot">
+      <div>
+        <a class="logo" href="#top">Outdoors<span>Chairs</span></a>
+        <p class="small">Furniture for slow days outside.</p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <a href="#shop">All chairs</a><a href="#collections">Collections</a><a href="#materials">Materials</a>
+      </div>
+      <div>
+        <h4>Help</h4>
+        <a href="#contact">Delivery</a><a href="#contact">Returns</a><a href="#contact">Care guide</a>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <a href="mailto:hello@outdoorschairs.com">hello@outdoorschairs.com</a>
+        <p class="small">Mon–Fri, 9am–5pm</p>
+      </div>
+    </div>
+    <div class="container legal">© <span id="yr">2026</span> Outdoors Chairs. All rights reserved.</div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
