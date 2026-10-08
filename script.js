@@ -33,6 +33,13 @@
     });
   });
 
+  document.querySelectorAll('[data-go]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      var chip = document.querySelector('.chip[data-filter="' + a.dataset.go + '"]');
+      if (chip) chip.click();
+    });
+  });
+
   var form = document.getElementById('nlForm');
   var msg = document.getElementById('nlMsg');
   form.addEventListener('submit', function (e) {
