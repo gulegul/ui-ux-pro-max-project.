@@ -2,12 +2,12 @@
   --bg:#f7f4ee; --surface:#fff; --ink:#23221f; --muted:#6b675f; --line:#e3ddd1;
   --accent:#2f4a3a; --accent-ink:#fff; --sand:#e8e1d6;
   --serif:"Fraunces",Georgia,serif; --sans:"DM Sans",system-ui,sans-serif;
-  --r:14px; --glass:rgba(255,255,255,.74); --glass-line:rgba(255,255,255,.8); --glass-ink:#23221f;
+  --r:14px; --glass:linear-gradient(135deg,rgba(255,255,255,.62),rgba(255,255,255,.28)); --glass-line:rgba(255,255,255,.75); --glass-ink:#23221f;
 }
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){--bg:#161512; --surface:#1f1d19; --ink:#f1ede4; --muted:#a39e92; --line:#2e2b25; --accent:#8fb59c; --accent-ink:#10150f; --sand:#2a2721; --glass:rgba(24,22,19,.72); --glass-line:rgba(255,255,255,.16); --glass-ink:#f1ede4; color-scheme:dark}
+  :root:not([data-theme="light"]){--bg:#161512; --surface:#1f1d19; --ink:#f1ede4; --muted:#a39e92; --line:#2e2b25; --accent:#8fb59c; --accent-ink:#10150f; --sand:#2a2721; --glass:linear-gradient(135deg,rgba(40,37,32,.62),rgba(20,18,15,.34)); --glass-line:rgba(255,255,255,.22); --glass-ink:#f1ede4; color-scheme:dark}
 }
-:root[data-theme="dark"]{--bg:#161512; --surface:#1f1d19; --ink:#f1ede4; --muted:#a39e92; --line:#2e2b25; --accent:#8fb59c; --accent-ink:#10150f; --sand:#2a2721; --glass:rgba(24,22,19,.72); --glass-line:rgba(255,255,255,.16); --glass-ink:#f1ede4; color-scheme:dark}
+:root[data-theme="dark"]{--bg:#161512; --surface:#1f1d19; --ink:#f1ede4; --muted:#a39e92; --line:#2e2b25; --accent:#8fb59c; --accent-ink:#10150f; --sand:#2a2721; --glass:linear-gradient(135deg,rgba(40,37,32,.62),rgba(20,18,15,.34)); --glass-line:rgba(255,255,255,.22); --glass-ink:#f1ede4; color-scheme:dark}
 *{box-sizing:border-box;margin:0}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
@@ -113,7 +113,7 @@ input[type=email]{flex:1 1 220px;padding:12px 18px;border-radius:99px;border:1px
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 
 /* glassmorphism */
-.glass{background:var(--glass);color:var(--glass-ink);border:1px solid var(--glass-line);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);box-shadow:0 8px 32px rgba(0,0,0,.12)}
+.glass{background:var(--glass);color:var(--glass-ink);border:1px solid var(--glass-line);-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);box-shadow:0 10px 36px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.55)}
 .site-header{background:var(--glass);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4)}
 .btn.glass-btn{background:var(--glass);color:var(--glass-ink);border-color:var(--glass-line);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 
@@ -146,8 +146,40 @@ input[type=email]{flex:1 1 220px;padding:12px 18px;border-radius:99px;border:1px
 
 /* fallbacks: no blur support, or reduced transparency requested */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-  :root{--glass:rgba(255,255,255,.92)}
+  .glass{background:var(--surface)}
 }
 @media (prefers-reduced-transparency:reduce){
   .glass,.site-header,.btn.glass-btn{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--surface)}
+}
+
+/* animations */
+.rv{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) var(--d,0s),transform .8s cubic-bezier(.2,.7,.2,1) var(--d,0s)}
+.rv.in{opacity:1;transform:none}
+@keyframes zoomOut{from{transform:scale(1.14)}to{transform:scale(1)}}
+@keyframes rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(4deg)}}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.stage>img{animation:zoomOut 2.6s cubic-bezier(.2,.7,.2,1) both}
+.hero-card{animation:rise .9s .25s cubic-bezier(.2,.7,.2,1) both}
+.float{animation:bob 5s ease-in-out infinite}
+.f1{animation-delay:.4s}.f2{animation-delay:-2.2s}
+.leaf{transform-origin:50% 100%;animation:sway 6s ease-in-out infinite}
+.cart.bump span{animation:pop .4s}
+.site-header{transition:box-shadow .3s,height .3s}
+.site-header.scrolled{box-shadow:0 6px 24px rgba(0,0,0,.1)}
+.pimg img{transition:transform .7s cubic-bezier(.2,.7,.2,1)}
+.product:hover .pimg img{transform:scale(1.06)}
+.product .tag{transition:transform .3s}
+.product:hover .tag{transform:translateY(-2px)}
+.label{transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.card:hover .label{transform:translateY(-4px)}
+.glass.float:hover,.hero-card .btn:hover{transform:translateY(-2px)}
+.scene.draw *{stroke-dasharray:var(--len);stroke-dashoffset:var(--len)}
+.scene.draw.in *{animation:draw 1.8s ease forwards}
+@media(prefers-reduced-motion:reduce){
+  .rv{opacity:1;transform:none;transition:none}
+  .stage>img,.hero-card,.float,.leaf,.scene.draw.in *,.cart.bump span{animation:none!important}
+  .scene.draw *{stroke-dasharray:none;stroke-dashoffset:0}
 }

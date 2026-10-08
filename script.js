@@ -19,6 +19,7 @@
     if (!e.target.classList.contains('add')) return;
     count += 1;
     countEl.textContent = count;
+    cartBtn.classList.remove('bump'); void cartBtn.offsetWidth; cartBtn.classList.add('bump');
     cartBtn.setAttribute('aria-label', 'Cart, ' + count + ' items');
   });
 
@@ -49,6 +50,33 @@
     msg.textContent = ok ? 'Thanks — you are on the list.' : 'Please enter a valid email address.';
     if (ok) form.reset();
   });
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var header = document.querySelector('.site-header');
+  window.addEventListener('scroll', function () {
+    header.classList.toggle('scrolled', window.scrollY > 8);
+  }, { passive: true });
+
+  if ('IntersectionObserver' in window && !reduce) {
+    var targets = document.querySelectorAll('.head, .strip-grid p, .card, .product, .split > *, .about-wrap > *, .nl > *, .foot > div');
+    targets.forEach(function (el, i) {
+      el.classList.add('rv');
+      el.style.setProperty('--d', ((i % 4) * 0.09) + 's');
+    });
+    var scene = document.querySelector('.scene');
+    scene.classList.add('draw');
+    scene.querySelectorAll('*').forEach(function (n) {
+      var len = n.getTotalLength ? Math.ceil(n.getTotalLength()) + 2 : 0;
+      n.style.setProperty('--len', len);
+    });
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.rv, .scene').forEach(function (el) { io.observe(el); });
+  }
 
   document.getElementById('yr').textContent = new Date().getFullYear();
 })();
