@@ -183,7 +183,7 @@
     '  float ndv = max(dot(N,V),0.0);',
     '  float rim = pow(1.0 - ndv, 3.0);',
     '  vec3 H = normalize(L + V);',
-    '  float spec = pow(max(dot(N,H),0.0), 28.0) * 0.12;',
+    '  float spec = pow(max(dot(N,H),0.0), 22.0) * 0.2;',
     '  vec3 c = col * diff * ao + col * back + vec3(0.75,0.05,0.10) * rim * 0.38 * sheen * (0.4 + 0.6 * ao) + vec3(1.0,0.82,0.8) * spec * ao * sheen;',
     '  gl_FragColor = vec4(c, 1.0);',
     '}'
