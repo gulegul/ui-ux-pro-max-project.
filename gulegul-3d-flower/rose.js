@@ -31,26 +31,36 @@
   /* ---------------------------------------------------------------- geometry */
   function sm(a, b, x) { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); }
 
-  function Mesh() { this.pos = []; this.nrm = []; this.att = []; this.idx = []; this.n = 0; }
+  function Mesh() { this.pos = []; this.nrm = []; this.pos2 = []; this.nrm2 = []; this.att = []; this.idx = []; this.n = 0; }
 
-  // fn(s,v) -> [x,y,z]; s,v in [0,1]. attrs: [t, kind, seed]
-  Mesh.prototype.patch = function (fn, nu, nv, t, kind, seed, closeU) {
-    var cols = nu + 1, rows = nv + 1, P = [], i, j;
-    for (j = 0; j < rows; j++) for (i = 0; i < cols; i++) P.push(fn(i / nu, j / nv));
+  function grid(fn, nu, nv) {
+    var P = [], i, j;
+    for (j = 0; j <= nv; j++) for (i = 0; i <= nu; i++) P.push(fn(i / nu, j / nv));
+    return P;
+  }
+  function normalAt(P, nu, nv, i, j, closeU) {
+    var cols = nu + 1;
     var at = function (a, b) {
       if (closeU) a = (a + nu) % nu; else a = Math.max(0, Math.min(nu, a));
       b = Math.max(0, Math.min(nv, b));
       return P[b * cols + a];
     };
-    var base = this.n;
-    for (j = 0; j < rows; j++) for (i = 0; i < cols; i++) {
-      var a = at(i + 1, j), b = at(i - 1, j), c = at(i, j + 1), d = at(i, j - 1);
-      var u = [a[0] - b[0], a[1] - b[1], a[2] - b[2]], w = [c[0] - d[0], c[1] - d[1], c[2] - d[2]];
-      var nx = u[1] * w[2] - u[2] * w[1], ny = u[2] * w[0] - u[0] * w[2], nz = u[0] * w[1] - u[1] * w[0];
-      var l = Math.hypot(nx, ny, nz) || 1, p = P[j * cols + i];
-      this.pos.push(p[0], p[1], p[2]);
-      this.nrm.push(nx / l, ny / l, nz / l);
-      this.att.push(t, i / nu, j / nv, kind + seed * 0.001); // t, s, v, kind+seed
+    var a = at(i + 1, j), b = at(i - 1, j), c = at(i, j + 1), d = at(i, j - 1);
+    var u = [a[0] - b[0], a[1] - b[1], a[2] - b[2]], w = [c[0] - d[0], c[1] - d[1], c[2] - d[2]];
+    var nx = u[1] * w[2] - u[2] * w[1], ny = u[2] * w[0] - u[0] * w[2], nz = u[0] * w[1] - u[1] * w[0];
+    var l = Math.hypot(nx, ny, nz) || 1;
+    return [nx / l, ny / l, nz / l];
+  }
+
+  // fn(s,v) = open shape; fn2(s,v) = closed (bud) shape, defaults to fn. attrs: [t, s, v, kind+seed]
+  Mesh.prototype.patch = function (fn, nu, nv, t, kind, seed, closeU, fn2) {
+    var P = grid(fn, nu, nv), P2 = fn2 ? grid(fn2, nu, nv) : P, i, j, cols = nu + 1, base = this.n;
+    for (j = 0; j <= nv; j++) for (i = 0; i <= nu; i++) {
+      var p = P[j * cols + i], p2 = P2[j * cols + i];
+      var n1 = normalAt(P, nu, nv, i, j, closeU), n2 = fn2 ? normalAt(P2, nu, nv, i, j, closeU) : n1;
+      this.pos.push(p[0], p[1], p[2]); this.nrm.push(n1[0], n1[1], n1[2]);
+      this.pos2.push(p2[0], p2[1], p2[2]); this.nrm2.push(n2[0], n2[1], n2[2]);
+      this.att.push(t, i / nu, j / nv, kind + seed * 0.001);
       this.n++;
     }
     for (j = 0; j < nv; j++) for (i = 0; i < nu; i++) {
@@ -64,28 +74,37 @@
     for (k = 0; k < K; k++) {
       (function (k) {
         var t = k / (K - 1), phi = k * GOLD, o = Math.pow(t, 1.15);
-        var R = 0.16 + 0.8 * Math.pow(t, 0.8);
-        var hw = 1.2 - 0.32 * t, y0 = 0.3 - 0.5 * t, H = 0.62 - 0.26 * t;
         var rnd = Math.sin(k * 12.9898) * 0.5 + 0.5;
-        m.patch(function (s, v) {
-          var x = s * 2 - 1;
-          var vv = v * (1 - 0.3 * x * x);
-          var wf = 0.5 + 0.5 * Math.sqrt(v);
-          var th = phi + x * hw * wf;
-          var rho = R * (0.62 + 0.38 * vv) + o * 0.5 * Math.pow(vv, 2.0) + 0.1 * o * x * x * vv;
-          rho *= 1 - (1 - o) * 0.38 * vv * vv;                       // inner petals stay closed
-          rho += 0.035 * o * Math.sin(x * 5 + k) * Math.pow(vv, 3); // ruffled rim
-          var y = y0 + H * Math.sin(vv * 1.35 * (1 - 0.45 * o)) - o * 0.22 * Math.pow(vv, 3)
-                + 0.05 * x * x * vv + 0.02 * rnd;
-          return [rho * Math.cos(th), y, rho * Math.sin(th)];
-        }, q.nu, q.nv, t, 0, rnd * 1000);
+        function shape(closed) {
+          var R = closed ? 0.1 + 0.3 * Math.pow(t, 0.8) : 0.16 + 0.8 * Math.pow(t, 0.8);
+          var hw = (closed ? 1.45 : 1.2) - 0.32 * t;
+          var y0 = closed ? 0.2 - 0.1 * t : 0.3 - 0.5 * t;
+          var H = closed ? 0.95 - 0.04 * t : 0.62 - 0.26 * t;
+          var oo = closed ? 0 : o;
+          return function (s, v) {
+            var x = s * 2 - 1;
+            var vv = v * (1 - 0.3 * x * x);
+            var wf = 0.5 + 0.5 * Math.sqrt(v);
+            var th = phi + x * hw * wf;
+            var rho = R * (0.62 + 0.38 * vv) + oo * 0.5 * Math.pow(vv, 2.0) + 0.1 * oo * x * x * vv;
+            rho *= 1 - (1 - oo) * (closed ? 0.8 : 0.38) * vv * vv;       // petals close over the top
+            rho += 0.035 * oo * Math.sin(x * 5 + k) * Math.pow(vv, 3);   // ruffled rim
+            var y = y0 + H * Math.sin(vv * 1.35 * (1 - 0.45 * oo)) - oo * 0.22 * Math.pow(vv, 3)
+                  + 0.05 * x * x * vv + 0.02 * rnd;
+            return [rho * Math.cos(th), y, rho * Math.sin(th)];
+          };
+        }
+        m.patch(shape(false), q.nu, q.nv, t, 0, rnd * 1000, false, shape(true));
       })(k);
     }
     // receptacle cup: fills the gaps between petal layers so no background shows through
     m.patch(function (s, v) {
       var a = s * Math.PI * 2, r = 0.12 + 0.95 * v, y = -0.25 + 0.62 * Math.pow(v, 0.55);
       return [r * Math.cos(a), y, r * Math.sin(a)];
-    }, 12, 6, 0.55, 0, 500, true);
+    }, 12, 6, 0.55, 0, 500, true, function (s, v) {
+      var a = s * Math.PI * 2, r = 0.08 + 0.3 * v, y = -0.25 + 0.7 * Math.pow(v, 0.6);
+      return [r * Math.cos(a), y, r * Math.sin(a)];
+    });
     // sepals
     for (k = 0; k < 5; k++) (function (k) {
       var a = k * Math.PI * 2 / 5 + 0.3;
@@ -117,12 +136,14 @@
 
   /* ----------------------------------------------------------------- shaders */
   var VS = [
-    'attribute vec3 aPos; attribute vec3 aNrm; attribute vec4 aAtt;',
-    'uniform mat4 uVP; uniform mat4 uModel; uniform float uTime;',
+    'attribute vec3 aPos; attribute vec3 aNrm; attribute vec3 aPos2; attribute vec3 aNrm2; attribute vec4 aAtt;',
+    'uniform mat4 uVP; uniform mat4 uModel; uniform float uTime; uniform float uBloom;',
     'varying vec3 vN; varying vec3 vW; varying vec4 vAtt;',
     'void main(){',
-    '  vec4 w = uModel * vec4(aPos,1.0);',
-    '  vW = w.xyz; vN = mat3(uModel) * aNrm; vAtt = aAtt;',
+    '  float pr = aAtt.w < 0.999 ? smoothstep(0.0, 1.0, clamp(uBloom * 1.8 - (1.0 - aAtt.x) * 0.8, 0.0, 1.0)) : 1.0;',
+    '  vec3 lp = mix(aPos2, aPos, pr); vec3 ln = normalize(mix(aNrm2, aNrm, pr));',
+    '  vec4 w = uModel * vec4(lp,1.0);',
+    '  vW = w.xyz; vN = mat3(uModel) * ln; vAtt = aAtt;',
     '  gl_Position = uVP * w;',
     '}'
   ].join('\n');
@@ -244,9 +265,11 @@
     }
 
     var mesh = build(q);
-    var vbo = gl.createBuffer(), nbo = gl.createBuffer(), abo = gl.createBuffer(), ibo = gl.createBuffer();
+    var v2 = gl.createBuffer(), n2 = gl.createBuffer(), vbo = gl.createBuffer(), nbo = gl.createBuffer(), abo = gl.createBuffer(), ibo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.pos), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, nbo); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.nrm), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, v2); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.pos2), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, n2); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.nrm2), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, abo); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.att), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(mesh.idx), gl.STATIC_DRAW);
 
@@ -257,7 +280,7 @@
     gl.bindBuffer(gl.ARRAY_BUFFER, dbo); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(dust), gl.STATIC_DRAW);
 
     var L = {
-      aPos: gl.getAttribLocation(prog, 'aPos'), aNrm: gl.getAttribLocation(prog, 'aNrm'), aAtt: gl.getAttribLocation(prog, 'aAtt'),
+      aPos: gl.getAttribLocation(prog, 'aPos'), aNrm: gl.getAttribLocation(prog, 'aNrm'), aAtt: gl.getAttribLocation(prog, 'aAtt'), aPos2: gl.getAttribLocation(prog, 'aPos2'), aNrm2: gl.getAttribLocation(prog, 'aNrm2'), uBloom: gl.getUniformLocation(prog, 'uBloom'),
       uVP: gl.getUniformLocation(prog, 'uVP'), uModel: gl.getUniformLocation(prog, 'uModel'),
       uCam: gl.getUniformLocation(prog, 'uCam'), uLight: gl.getUniformLocation(prog, 'uLight'),
       dD: gl.getAttribLocation(dprog, 'aD'), dVP: gl.getUniformLocation(dprog, 'uVP'),
@@ -267,6 +290,16 @@
     host.appendChild(canvas);
     var W = 0, H = 0, dpr = 1;
     var tgt = { x: 0, y: 0 }, cur = { x: 0, y: 0 };
+    // Bloom: 0 = closed bud, 1 = open. Plays once on load; tap/click the rose to replay.
+    var bloomStart = null, BLOOM_MS = 5200;
+    var fixedBloom = params.has('b') ? parseFloat(params.get('b')) : ((pinned != null || reduced) ? 1 : null);
+    function bloom() {
+      if (fixedBloom != null) return fixedBloom;
+      if (bloomStart == null) bloomStart = performance.now() + 400;
+      var p = Math.min(1, Math.max(0, (performance.now() - bloomStart) / BLOOM_MS));
+      return 1 - Math.pow(1 - p, 2.2);
+    }
+    host.addEventListener('click', function () { if (fixedBloom == null) bloomStart = performance.now(); });
     var visible = true, raf = 0, last = 0, time = pinned != null ? pinned : 0, ready = false;
 
     function resize() {
@@ -304,10 +337,13 @@
       gl.uniform3f(L.uLight, -0.45, 0.8, 0.55);
       gl.bindBuffer(gl.ARRAY_BUFFER, vbo); gl.enableVertexAttribArray(L.aPos); gl.vertexAttribPointer(L.aPos, 3, gl.FLOAT, false, 0, 0);
       gl.bindBuffer(gl.ARRAY_BUFFER, nbo); gl.enableVertexAttribArray(L.aNrm); gl.vertexAttribPointer(L.aNrm, 3, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, v2); gl.enableVertexAttribArray(L.aPos2); gl.vertexAttribPointer(L.aPos2, 3, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, n2); gl.enableVertexAttribArray(L.aNrm2); gl.vertexAttribPointer(L.aNrm2, 3, gl.FLOAT, false, 0, 0);
+      gl.uniform1f(L.uBloom, bloom());
       gl.bindBuffer(gl.ARRAY_BUFFER, abo); gl.enableVertexAttribArray(L.aAtt); gl.vertexAttribPointer(L.aAtt, 4, gl.FLOAT, false, 0, 0);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
       gl.drawElements(gl.TRIANGLES, mesh.idx.length, gl.UNSIGNED_SHORT, 0);
-      gl.disableVertexAttribArray(L.aNrm); gl.disableVertexAttribArray(L.aAtt);
+      gl.disableVertexAttribArray(L.aNrm); gl.disableVertexAttribArray(L.aAtt); gl.disableVertexAttribArray(L.aPos2); gl.disableVertexAttribArray(L.aNrm2);
 
       gl.useProgram(dprog);
       gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
