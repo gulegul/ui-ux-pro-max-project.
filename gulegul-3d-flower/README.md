@@ -2,7 +2,7 @@
 
 Drop-in replacement for the three.js rose in `.hero-art` on `index-new.html`.
 
-- `rose.js` — dependency-free WebGL renderer (no three.js / CDN). Procedural rose: golden-angle petal spiral, sepals, stem, leaves, gold dust.
+- `rose.js` — dependency-free WebGL renderer (no three.js / CDN). Procedural rose: golden-angle petal spiral, sepals, stem, leaves, falling rose petals.
 - `rose-poster.png` — pre-rendered frame, shown until WebGL is live and kept as the fallback (no WebGL, context loss).
 - `index.html` — demo hero (Cormorant Garamond + Montserrat, pink/gold tokens from the ui-ux-pro-max design system).
 

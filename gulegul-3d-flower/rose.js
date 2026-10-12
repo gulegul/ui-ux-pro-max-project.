@@ -1,7 +1,7 @@
 /*!
  * Gulegul 3D rose — dependency-free WebGL renderer (no three.js, no CDN).
  * Procedural geometry: petals on a golden-angle spiral, sepals, stem, leaves,
- * plus drifting gold dust. ~12k vertices, one program for the flower and one
+ * plus a shower of falling rose petals. ~12k vertices, one program for the flower and one
  * for the dust, so it runs on phones.
  *
  * Patterns borrowed from 21st.dev "Lattice Hero" (bevelui): canvas sized to its
@@ -15,9 +15,9 @@
 
   var GOLD = Math.PI * (3 - Math.sqrt(5));
   var QUALITY = {
-    low:    { petals: 24, nu: 10, nv: 8,  dust: 36, dpr: 1.5 },
-    medium: { petals: 32, nu: 14, nv: 11, dust: 60, dpr: 2 },
-    high:   { petals: 40, nu: 18, nv: 14, dust: 90, dpr: 2 }
+    low:    { petals: 24, nu: 10, nv: 8,  dust: 22, dpr: 1.5 },
+    medium: { petals: 32, nu: 14, nv: 11, dust: 32, dpr: 2 },
+    high:   { petals: 40, nu: 18, nv: 14, dust: 44, dpr: 2 }
   };
 
   function pickQuality() {
@@ -185,25 +185,36 @@
     '}'
   ].join('\n');
 
+  // Falling rose petals (same colours as the flower). One shower during the bloom, then they are gone.
   var DVS = [
-    'attribute vec4 aD; uniform mat4 uVP; uniform float uTime; uniform float uPx; varying float vA;',
+    'attribute vec4 aD; uniform mat4 uVP; uniform float uTime; uniform float uPx; varying float vA; varying float vRot; varying vec3 vC;',
     'void main(){',
     '  float ph = aD.w;',
-    '  float life = fract(uTime * 0.035 + ph);',
-    '  vec3 p = aD.xyz;',
-    '  p.y += life * 3.2 - 1.2;',
-    '  p.x += sin(uTime * 0.6 + ph * 40.0) * 0.18;',
-    '  p.z += cos(uTime * 0.5 + ph * 31.0) * 0.18;',
-    '  vA = smoothstep(0.0,0.15,life) * smoothstep(1.0,0.7,life);',
-    '  gl_Position = uVP * vec4(p,1.0);',
-    '  gl_PointSize = uPx * (1.2 + 2.2 * fract(ph * 7.31)) / gl_Position.w;',
+    '  float delay = fract(ph * 13.7) * 1.3;',
+    '  float dur = 2.6 + fract(ph * 7.3) * 1.5;',
+    '  float p = clamp((uTime - delay) / dur, 0.0, 1.0);',
+    '  vec3 q = aD.xyz;',
+    '  q.y = 2.0 - p * 3.9 + aD.y * 0.25;',
+    '  q.x += sin(p * 6.0 + ph * 40.0) * 0.28;',
+    '  q.z += cos(p * 5.0 + ph * 31.0) * 0.2;',
+    '  vA = (p <= 0.0 || p >= 1.0) ? 0.0 : smoothstep(0.0, 0.08, p) * smoothstep(1.0, 0.85, p);',
+    '  vRot = p * 7.0 + ph * 20.0;',
+    '  vC = mix(vec3(0.78,0.10,0.27), vec3(0.96,0.52,0.62), fract(ph * 5.1));',
+    '  gl_Position = uVP * vec4(q,1.0);',
+    '  gl_PointSize = uPx * (0.7 + 0.8 * fract(ph * 3.7)) / gl_Position.w;',
     '}'
   ].join('\n');
   var DFS = [
-    'precision mediump float; varying float vA;',
-    'void main(){ float r = length(gl_PointCoord - 0.5); if (r > 0.5) discard;',
-    '  float a = smoothstep(0.5,0.0,r) * vA * 0.85;',
-    '  gl_FragColor = vec4(vec3(1.0,0.82,0.45) * a, a); }'
+    'precision mediump float; varying float vA; varying float vRot; varying vec3 vC;',
+    'void main(){',
+    '  vec2 c = gl_PointCoord - 0.5;',
+    '  float cs = cos(vRot), sn = sin(vRot);',
+    '  vec2 r = vec2(c.x * cs - c.y * sn, c.x * sn + c.y * cs);',
+    '  float d = (r.x * r.x) / (0.2 * 0.2) + (r.y * r.y) / (0.46 * 0.46);',
+    '  if (d > 1.0 || vA <= 0.0) discard;',
+    '  float shade = 0.75 + 0.35 * (r.y + 0.5);',
+    '  gl_FragColor = vec4(vC * shade * vA, vA);',
+    '}'
   ].join('\n');
 
   /* ------------------------------------------------------------------ matrix */
@@ -275,7 +286,7 @@
 
     var dust = [], i, seedR = 7;
     function rnd() { seedR = (seedR * 16807) % 2147483647; return seedR / 2147483647; }
-    for (i = 0; i < q.dust; i++) dust.push((rnd() - .5) * 4.2, (rnd() - .5) * 1.5, (rnd() - .5) * 2.4, rnd());
+    for (i = 0; i < q.dust; i++) dust.push((rnd() - .5) * 3.6, (rnd() - .5) * 1.5, (rnd() - .5) * 2.0, rnd());
     var dbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, dbo); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(dust), gl.STATIC_DRAW);
 
@@ -291,7 +302,7 @@
     var W = 0, H = 0, dpr = 1;
     var tgt = { x: 0, y: 0 }, cur = { x: 0, y: 0 };
     // Bloom: 0 = closed bud, 1 = open. Plays once on load; tap/click the rose to replay.
-    var BLOOM_S = 2.2, DELAY_S = 0.15, STOP_S = 2.8;   // bloom takes 2.2s, then everything settles and stops
+    var BLOOM_S = 2.2, DELAY_S = 0.15, STOP_S = 5.0;   // bloom takes 2.2s, then everything settles and stops
     var fixedBloom = params.has('b') ? parseFloat(params.get('b')) : ((pinned != null || reduced) ? 1 : null);
     function bloom() {
       if (fixedBloom != null) return fixedBloom;
@@ -321,7 +332,7 @@
       var cam = [0, 0.0, dist];
       var view = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -cam[0], -cam[1], -cam[2], 1];
       var vp = mul(persp(fov, asp, 0.1, 40), view);
-      var yaw = (pinned != null ? pinned : Math.min(time, STOP_S)) * 0.28 + cur.x * 0.5;
+      var yaw = (pinned != null ? pinned * 0.28 : 0.28 * STOP_S * (1 - Math.pow(1 - Math.min(time, STOP_S) / STOP_S, 2))) + cur.x * 0.5;
       var m = model(yaw, 0.5 + cur.y * 0.25, -0.1, -0.1);
 
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -349,7 +360,7 @@
       gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
       gl.uniformMatrix4fv(L.dVP, false, new Float32Array(vp));
       gl.uniform1f(L.dTime, pinned != null ? pinned : Math.min(time, STOP_S));
-      gl.uniform1f(L.dPx, 34 * dpr);
+      gl.uniform1f(L.dPx, 190 * dpr);
       gl.bindBuffer(gl.ARRAY_BUFFER, dbo); gl.enableVertexAttribArray(L.dD); gl.vertexAttribPointer(L.dD, 4, gl.FLOAT, false, 0, 0);
       gl.drawArrays(gl.POINTS, 0, q.dust);
       gl.disableVertexAttribArray(L.dD); gl.depthMask(true);
