@@ -50,6 +50,7 @@ h1 em{font-style:italic;color:var(--primary)}
 .hero-art .rose-canvas,.hero-art .rose-poster{position:absolute;inset:0;width:100%;height:100%;display:block}
 .hero-art .rose-poster{object-fit:contain;opacity:1;transition:opacity .6s ease}
 .hero-art.is-live .rose-poster{opacity:0}
+.hero-art.is-video{background:#000}
 .hero-art .rose-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .hero-art.is-video .rose-poster{opacity:0}
 .hero-art .rose-open{display:none}
@@ -102,7 +103,7 @@ body.poster-mode .hero-grid{display:block;max-width:none}
           </a>
         </div>
       </div>
-      <div class="hero-art" data-rose data-video="rose-bloom.mp4" role="img" aria-label="A slowly turning red rose">
+      <div class="hero-art" data-rose data-video="rose-bloom" role="img" aria-label="A slowly turning red rose">
         <img class="rose-poster rose-bud" src="rose-bud.png" alt="" width="1000" height="1000" decoding="async">
         <img class="rose-poster rose-open" src="rose-poster.png" alt="" width="1000" height="1000" decoding="async" loading="lazy">
       </div>

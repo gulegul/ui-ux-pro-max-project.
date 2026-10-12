@@ -400,20 +400,26 @@
 
   // Start after the page has loaded and the browser is idle, so the poster (bud) is on screen first
   // and the bloom plays as a reveal a moment later.
-  // Optional real footage: <div data-rose data-video="rose-bloom.mp4">. Plays once muted and holds the last
-  // frame. If the file is missing or cannot play, the 3D rose is used instead.
+  // Optional footage: <div data-rose data-video="rose-bloom"> (loads rose-bloom.webm / .mp4). Loops muted: bloom in, hold, bloom out.
+  // If the file is missing or cannot play, the 3D rose is used instead.
   function tryVideo(host) {
-    var v = document.createElement('video'), done = false;
-    v.className = 'rose-video'; v.muted = true; v.playsInline = true; v.preload = 'auto';
-    v.setAttribute('aria-hidden', 'true'); v.src = host.getAttribute('data-video');
-    v.addEventListener('error', function () { if (!done) { done = true; init(host); } }, { once: true });
+    var v = document.createElement('video'), done = false, base = host.getAttribute('data-video');
+    v.className = 'rose-video'; v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto';
+    v.setAttribute('aria-hidden', 'true');
+    ['webm', 'mp4'].forEach(function (ext) {
+      var src = document.createElement('source'); src.src = base + '.' + ext; src.type = 'video/' + ext;
+      v.appendChild(src);
+    });
+    var fallback = function () { if (!done) { done = true; init(host); } };
+    v.lastElementChild.addEventListener('error', fallback, { once: true });   // no source could be loaded
+    v.addEventListener('error', fallback, { once: true });
     v.addEventListener('canplaythrough', function () {
       if (done) return; done = true;
       host.appendChild(v); host.classList.add('is-live', 'is-video');
-      if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { v.currentTime = v.duration || 0; }
-      else { var p = v.play(); if (p && p.catch) p.catch(function () { v.currentTime = v.duration || 0; }); }
+      if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { v.loop = false; v.currentTime = 2.8; }
+      else { var p = v.play(); if (p && p.catch) p.catch(function () { v.currentTime = 2.8; }); }
     }, { once: true });
-    setTimeout(function () { if (!done) { done = true; init(host); } }, 4000);   // slow or unsupported: use the 3D rose
+    setTimeout(fallback, 5000);   // slow or unsupported: use the 3D rose
     v.load();
   }
 
