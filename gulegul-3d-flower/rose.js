@@ -291,15 +291,15 @@
     var W = 0, H = 0, dpr = 1;
     var tgt = { x: 0, y: 0 }, cur = { x: 0, y: 0 };
     // Bloom: 0 = closed bud, 1 = open. Plays once on load; tap/click the rose to replay.
-    var bloomStart = null, BLOOM_MS = 5200;
+    var BLOOM_S = 2.2, DELAY_S = 0.15, STOP_S = 2.8;   // bloom takes 2.2s, then everything settles and stops
     var fixedBloom = params.has('b') ? parseFloat(params.get('b')) : ((pinned != null || reduced) ? 1 : null);
     function bloom() {
       if (fixedBloom != null) return fixedBloom;
-      if (bloomStart == null) bloomStart = performance.now() + 400;
-      var p = Math.min(1, Math.max(0, (performance.now() - bloomStart) / BLOOM_MS));
+      var p = Math.min(1, Math.max(0, (time - DELAY_S) / BLOOM_S));
       return 1 - Math.pow(1 - p, 2.2);
     }
-    host.addEventListener('click', function () { if (fixedBloom == null) bloomStart = performance.now(); });
+    function settled() { return time >= STOP_S && Math.abs(tgt.x - cur.x) < 0.002 && Math.abs(tgt.y - cur.y) < 0.002; }
+    host.addEventListener('click', function () { if (fixedBloom == null) { time = 0; last = performance.now(); schedule(); } });
     var visible = true, raf = 0, last = 0, time = pinned != null ? pinned : 0, ready = false;
 
     function resize() {
@@ -321,7 +321,7 @@
       var cam = [0, 0.0, dist];
       var view = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -cam[0], -cam[1], -cam[2], 1];
       var vp = mul(persp(fov, asp, 0.1, 40), view);
-      var yaw = (pinned != null ? pinned : time) * 0.28 + cur.x * 0.5;
+      var yaw = (pinned != null ? pinned : Math.min(time, STOP_S)) * 0.28 + cur.x * 0.5;
       var m = model(yaw, 0.5 + cur.y * 0.25, -0.1, -0.1);
 
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -348,7 +348,7 @@
       gl.useProgram(dprog);
       gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
       gl.uniformMatrix4fv(L.dVP, false, new Float32Array(vp));
-      gl.uniform1f(L.dTime, time);
+      gl.uniform1f(L.dTime, pinned != null ? pinned : Math.min(time, STOP_S));
       gl.uniform1f(L.dPx, 34 * dpr);
       gl.bindBuffer(gl.ARRAY_BUFFER, dbo); gl.enableVertexAttribArray(L.dD); gl.vertexAttribPointer(L.dD, 4, gl.FLOAT, false, 0, 0);
       gl.drawArrays(gl.POINTS, 0, q.dust);
@@ -364,7 +364,7 @@
       cur.x += (tgt.x - cur.x) * Math.min(1, dt * 2.5);
       cur.y += (tgt.y - cur.y) * Math.min(1, dt * 2.5);
       draw();
-      schedule();
+      if (!settled()) schedule();
     }
     function animated() { return pinned == null && !reduced; }
     function schedule() { if (!raf && visible && !document.hidden && animated()) { raf = requestAnimationFrame(frame); } }
@@ -376,6 +376,7 @@
     document.addEventListener('visibilitychange', function () { last = performance.now(); schedule(); });
     if (animated()) window.addEventListener('pointermove', function (e) {
       tgt.x = (e.clientX / window.innerWidth - 0.5) * 2; tgt.y = (e.clientY / window.innerHeight - 0.5) * 2;
+      last = performance.now(); schedule();
     }, { passive: true });
     canvas.addEventListener('webglcontextlost', function (e) { e.preventDefault(); host.classList.remove('is-live'); host.classList.add('is-fallback'); });
 
