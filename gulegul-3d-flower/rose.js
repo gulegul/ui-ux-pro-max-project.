@@ -15,9 +15,9 @@
 
   var GOLD = Math.PI * (3 - Math.sqrt(5));
   var QUALITY = {
-    low:    { petals: 24, nu: 10, nv: 8,  dust: 22, dpr: 1.5 },
-    medium: { petals: 32, nu: 14, nv: 11, dust: 32, dpr: 2 },
-    high:   { petals: 40, nu: 18, nv: 14, dust: 44, dpr: 2 }
+    low:    { petals: 28, nu: 12, nv: 10,  dust: 22, dpr: 1.5 },
+    medium: { petals: 36, nu: 16, nv: 13, dust: 32, dpr: 2 },
+    high:   { petals: 46, nu: 22, nv: 18, dust: 44, dpr: 2 }
   };
 
   function pickQuality() {
@@ -88,9 +88,11 @@
             var th = phi + x * hw * wf;
             var rho = R * (0.62 + 0.38 * vv) + oo * 0.5 * Math.pow(vv, 2.0) + 0.1 * oo * x * x * vv;
             rho *= 1 - (1 - oo) * (closed ? 0.8 : 0.38) * vv * vv;       // petals close over the top
-            rho += 0.035 * oo * Math.sin(x * 5 + k) * Math.pow(vv, 3);   // ruffled rim
-            var y = y0 + H * Math.sin(vv * 1.35 * (1 - 0.45 * oo)) - oo * 0.22 * Math.pow(vv, 3)
-                  + 0.05 * x * x * vv + 0.02 * rnd;
+            var lip = sm(0.7, 1.0, vv);                                   // rolled-back lip
+            rho += 0.05 * oo * Math.sin(x * 4.2 + k * 1.7) * Math.pow(vv, 3.5) + 0.2 * oo * lip * lip;
+            var y = y0 + H * Math.sin(vv * 1.35 * (1 - 0.45 * oo)) - oo * 0.2 * vv * vv
+                  + oo * 0.2 * lip + 0.05 * x * x * vv + 0.02 * rnd
+                  + 0.035 * oo * Math.sin(x * 3.1 + k * 2.3) * lip;
             return [rho * Math.cos(th), y, rho * Math.sin(th)];
           };
         }
@@ -160,27 +162,28 @@
     '  vec3 L = normalize(uLight);',
     '  vec3 col; float ao = 1.0; float sheen = 0.0;',
     '  if (kind < 0.5) {',
-    '    vec3 deep = vec3(0.50,0.05,0.17), mid = vec3(0.82,0.13,0.31), lite = vec3(0.95,0.50,0.60), edge = vec3(0.99,0.78,0.82);',
-    '    col = mix(deep, mid, smoothstep(0.0,0.5,v));',
-    '    col = mix(col, lite, smoothstep(0.5,1.0,v) * 0.85);',
-    '    col = mix(col, edge, pow(v,7.0) * 0.55);',
-    '    col *= 0.62 + 0.38 * smoothstep(0.0, 0.45, t);',
-    '    col += 0.035 * sin((s-0.5)*34.0 + seed) * (1.0 - v*0.5);',
-    '    ao = mix(0.42,1.0,smoothstep(0.0,0.75,v)) * mix(0.5,1.0,smoothstep(0.0,0.85,t));',
-    '    sheen = 0.5;',
+    '    vec3 deep = vec3(0.14,0.0,0.02), mid = vec3(0.52,0.02,0.06), lite = vec3(0.66,0.03,0.07), edge = vec3(0.84,0.09,0.12);',
+    '    col = mix(deep, mid, smoothstep(0.0,0.45,v));',
+    '    col = mix(col, lite, smoothstep(0.45,1.0,v) * 0.8);',
+    '    col = mix(col, edge, pow(v,6.0) * 0.55);',
+    '    col *= 0.55 + 0.45 * smoothstep(0.0, 0.5, t);',
+    '    col += 0.025 * sin((s-0.5)*36.0 + seed) * (1.0 - v*0.4);',
+    '    ao = mix(0.30,1.0,smoothstep(0.0,0.7,v)) * mix(0.42,1.0,smoothstep(0.0,0.9,t));',
+    '    sheen = 1.0;',
     '  } else {',
-    '    vec3 g1 = vec3(0.09,0.28,0.12), g2 = vec3(0.30,0.52,0.24);',
+    '    vec3 g1 = vec3(0.04,0.15,0.06), g2 = vec3(0.16,0.36,0.14);',
     '    col = mix(g1, g2, kind > 1.5 ? v*0.8 : 0.35);',
-    '    if (kind > 1.5) col += 0.05 * smoothstep(0.02,0.0,abs(s-0.5));',
-    '    ao = 0.75;',
+    '    if (kind > 1.5) col += 0.04 * smoothstep(0.02,0.0,abs(s-0.5));',
+    '    ao = 0.8;',
     '  }',
     '  float ndl = dot(N,L);',
-    '  float diff = 0.38 + 0.62 * smoothstep(-0.35, 1.0, ndl);',
-    '  float back = max(0.0, -dot(N,L)) * 0.22;',
-    '  float rim = pow(1.0 - max(dot(N,V),0.0), 2.5);',
+    '  float diff = 0.30 + 0.70 * smoothstep(-0.4, 1.0, ndl);',
+    '  float back = max(0.0, -dot(N,L)) * 0.28;',
+    '  float ndv = max(dot(N,V),0.0);',
+    '  float rim = pow(1.0 - ndv, 3.0);',
     '  vec3 H = normalize(L + V);',
-    '  float spec = pow(max(dot(N,H),0.0), 36.0) * 0.16;',
-    '  vec3 c = col * diff * ao + col * back + vec3(1.0,0.72,0.78) * rim * 0.20 * sheen + vec3(1.0,0.95,0.9) * spec * ao;',
+    '  float spec = pow(max(dot(N,H),0.0), 28.0) * 0.12;',
+    '  vec3 c = col * diff * ao + col * back + vec3(0.75,0.05,0.10) * rim * 0.38 * sheen * (0.4 + 0.6 * ao) + vec3(1.0,0.82,0.8) * spec * ao * sheen;',
     '  gl_FragColor = vec4(c, 1.0);',
     '}'
   ].join('\n');
@@ -199,7 +202,7 @@
     '  q.z += cos(p * 5.0 + ph * 31.0) * 0.2;',
     '  vA = (p <= 0.0 || p >= 1.0) ? 0.0 : smoothstep(0.0, 0.08, p) * smoothstep(1.0, 0.85, p);',
     '  vRot = p * 7.0 + ph * 20.0;',
-    '  vC = mix(vec3(0.78,0.10,0.27), vec3(0.96,0.52,0.62), fract(ph * 5.1));',
+    '  vC = mix(vec3(0.50,0.02,0.07), vec3(0.86,0.12,0.18), fract(ph * 5.1));',
     '  gl_Position = uVP * vec4(q,1.0);',
     '  gl_PointSize = uPx * (0.7 + 0.8 * fract(ph * 3.7)) / gl_Position.w;',
     '}'
@@ -326,7 +329,7 @@
     function draw() {
       var asp = W / H, fov = 34 * Math.PI / 180;
       // Fit the whole bloom (radius ~1.5, height ~2) inside the container, any aspect.
-      var halfH = 2.0, halfW = 1.9;
+      var halfH = 2.15, halfW = 2.1;
       var distH = halfH / Math.tan(fov / 2), distW = halfW / (Math.tan(fov / 2) * asp);
       var dist = Math.max(distH, distW);
       var cam = [0, 0.0, dist];

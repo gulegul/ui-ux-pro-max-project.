@@ -45,7 +45,7 @@ h1 em{font-style:italic;color:var(--primary)}
 .btn svg{width:18px;height:18px;flex:none}
 
 /* The rose is sized by its container, never the viewport — this is what stops the clipped hero. */
-.hero-art{position:relative;width:100%;aspect-ratio:1/1;max-height:70svh;min-height:300px;justify-self:center;overflow:hidden;contain:layout paint}
+.hero-art{position:relative;border-radius:28px;background:radial-gradient(75% 65% at 50% 38%,#4a0c1a 0%,#230610 55%,#12030a 100%);box-shadow:0 30px 70px -30px rgba(131,24,67,.55),inset 0 1px 0 rgba(255,255,255,.12);width:100%;aspect-ratio:1/1;max-height:70svh;min-height:300px;justify-self:center;overflow:hidden;contain:layout paint}
 @media(min-width:960px){.hero-art{aspect-ratio:auto;height:min(78svh,720px);max-height:none}}
 .hero-art .rose-canvas,.hero-art .rose-poster{position:absolute;inset:0;width:100%;height:100%;display:block}
 .hero-art .rose-poster{object-fit:contain;opacity:1;transition:opacity .6s ease}
@@ -74,6 +74,8 @@ h1 em{font-style:italic;color:var(--primary)}
 .chip-b{right:4%;bottom:14%}
 @media(min-width:960px){.chip{padding:14px 20px;font-size:13px}.chip b{font-size:20px}.chip-a{left:2%;top:18%}.chip-b{right:2%;bottom:20%}}
 body.poster-mode .nav,body.poster-mode .chip,body.poster-mode .copy,body.poster-mode .hero-art .rose-poster{display:none!important}
+body.poster-mode{background:#12030a}
+body.poster-mode .hero-art{background:none;box-shadow:none;border-radius:0}
 body.poster-mode .hero{background:none;padding:0;min-height:0;display:block}
 body.poster-mode .hero-grid{display:block;max-width:none}
 </style>
