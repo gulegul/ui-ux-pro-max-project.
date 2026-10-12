@@ -17,6 +17,7 @@ See `index.html` for the `.hero-art` CSS. The canvas is sized by its container (
 
 ## Notes
 - Bloom: the page shows a bud poster first; once loaded and idle the 3D rose fades in and opens (outer petals first, slight overshoot, ~2.4s), petals fall, then everything stops. Click/tap replays. `?b=0..1` pins the bloom, `?t=` or reduced-motion shows it fully open. Same idea as the delayed bloom on the live home page.
+- Real footage: if the hero has `data-video="rose-bloom.mp4"` (add the file next to index.html) it plays once, muted, and holds the last frame; if missing or unsupported the 3D rose is used. Video path not yet tested with a real file.
 - Quality tiers (low/medium/high) by screen width and CPU cores; `?q=low|medium|high` overrides.
 - Pauses off-screen and on hidden tabs; `prefers-reduced-motion` renders one still frame; `?t=2` pins a frame (for screenshots).
 - Patterns taken from 21st.dev "Lattice Hero" (container-sized canvas, adaptive quality, off-screen pause, damped pointer parallax). No 21st code is copied; 21st had no rose/flower component.
