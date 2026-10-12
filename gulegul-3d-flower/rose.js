@@ -140,7 +140,7 @@
     'uniform mat4 uVP; uniform mat4 uModel; uniform float uTime; uniform float uBloom;',
     'varying vec3 vN; varying vec3 vW; varying vec4 vAtt;',
     'void main(){',
-    '  float pr = aAtt.w < 0.999 ? smoothstep(0.0, 1.0, clamp(uBloom * 1.8 - (1.0 - aAtt.x) * 0.8, 0.0, 1.0)) : 1.0;',
+    '  float x = clamp(uBloom * 1.7 - (1.0 - aAtt.x) * 0.7, 0.0, 1.0); float pr = aAtt.w < 0.999 ? (1.0 + 2.1 * (x - 1.0) * (x - 1.0) * (x - 1.0) + 1.1 * (x - 1.0) * (x - 1.0)) : 1.0;',
     '  vec3 lp = mix(aPos2, aPos, pr); vec3 ln = normalize(mix(aNrm2, aNrm, pr));',
     '  vec4 w = uModel * vec4(lp,1.0);',
     '  vW = w.xyz; vN = mat3(uModel) * ln; vAtt = aAtt;',
@@ -302,12 +302,12 @@
     var W = 0, H = 0, dpr = 1;
     var tgt = { x: 0, y: 0 }, cur = { x: 0, y: 0 };
     // Bloom: 0 = closed bud, 1 = open. Plays once on load; tap/click the rose to replay.
-    var BLOOM_S = 2.2, DELAY_S = 0.15, STOP_S = 5.0;   // bloom takes 2.2s, then everything settles and stops
+    var BLOOM_S = 2.4, DELAY_S = 0.6, STOP_S = 5.8;   // bloom takes 2.2s, then everything settles and stops
     var fixedBloom = params.has('b') ? parseFloat(params.get('b')) : ((pinned != null || reduced) ? 1 : null);
     function bloom() {
       if (fixedBloom != null) return fixedBloom;
       var p = Math.min(1, Math.max(0, (time - DELAY_S) / BLOOM_S));
-      return 1 - Math.pow(1 - p, 2.2);
+      return p;   // linear; each petal eases itself in the shader (staggered, slight overshoot)
     }
     function settled() { return time >= STOP_S && Math.abs(tgt.x - cur.x) < 0.002 && Math.abs(tgt.y - cur.y) < 0.002; }
     host.addEventListener('click', function () { if (fixedBloom == null) { time = 0; last = performance.now(); schedule(); } });
@@ -395,10 +395,16 @@
     return { redraw: draw };
   }
 
+  // Start after the page has loaded and the browser is idle, so the poster (bud) is on screen first
+  // and the bloom plays as a reveal a moment later.
   function boot() {
     var hosts = document.querySelectorAll('[data-rose]');
-    for (var i = 0; i < hosts.length; i++) init(hosts[i]);
+    var go = function () { for (var i = 0; i < hosts.length; i++) init(hosts[i]); };
+    var idle = function () { (window.requestIdleCallback || function (f) { setTimeout(f, 250); })(go); };
+    var q = new URLSearchParams(location.search);
+    if (q.has('t') || q.has('b')) go();   // pinned frames (screenshots) start immediately
+    else if (document.readyState === 'complete') idle(); else window.addEventListener('load', idle);
   }
   window.GulegulRose = { init: init };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+  boot();
 })();
